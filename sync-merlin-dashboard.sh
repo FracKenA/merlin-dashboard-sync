@@ -36,18 +36,24 @@ asmonitor \
 
 sync_sql_file_to_peers ()
 {
-    for node in `mon node list --type=peer`; \
-        do asmonitor \
-            scp /opt/monitor/var/merlin_database_sync.sql \
-                $node:/opt/monitor/var/merlin_database_sync.sql \
-                >&/dev/null;
-        done;
+for node in `mon node list --type=peer`; \
+    do asmonitor \
+        scp /opt/monitor/var/merlin_database_sync.sql \
+            $node:/opt/monitor/var/merlin_database_sync.sql;
+    done;
 }
 
 import_sql_file_on_peers ()
 {
-    for node in `mon node list --type=peer`; \
-        do asmonitor \
-            ssh $node 'mysql -u root < /opt/monitor/var/merlin_database_sync.sql';
-        done;
+for node in `mon node list --type=peer`; \
+    do asmonitor \
+        ssh $node 'mysql -u root merlin < /opt/monitor/var/merlin_database_sync.sql';
+    done;
 }
+
+
+export_sql_tables
+
+sync_sql_file_to_peers
+
+import_sql_file_on_peers
