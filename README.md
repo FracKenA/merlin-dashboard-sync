@@ -1,7 +1,11 @@
 # Merlin Dashboard and Filter One Way Replication
 
 **This script is provided with no expressed warranty or support.  For assistance please contact your OP5 Account manager to get in touch with OP5's Professional Services.**
-** You can contact your account manager at the following link. [Contact us at OP5](https://www.op5.com/contact-us/)**
+
+** You can contact your account manager at the following link. **
+
+[Contact us at OP5](https://www.op5.com/contact-us/)
+
 
 ## Purpose
 This script is designed to copy all the required mariadb tables required to have your dashboards, filters and reports duplicated on all peers.
