@@ -52,7 +52,43 @@ for node in $(mon node list --type=peer); \
     done;
 }
 
+dump_remote_database_tables ()
+{
+for node in $(mon node list --ype=peer); \
+    do asmonitor \
+        mysqldump -u root --add-drop-table merlin \
+            dashboards \
+            dashboard_widgets \
+            ninja_report_comments \
+            custom_vars \
+            ninja_saved_filters \
+            ninja_settings \
+            permission_quarks \
+            saved_reports \
+            saved_reports_objects \
+            saved_reports_options \
+        > /opt/monitor/var/merlin_database_sync_verify.sql;
+    done;
+}
+
+compare_remote_database ()
+{
+for node in $(mon node list --type=peer); \
+    do
+        local OUTPUT
+        OUTPUT=$(asmonitor ssh "$node" 'cmp -s /opt/monitor/var/merlin_database_sync.sql /opt/monitor/var/merlin_database_sync_verify.sql')
+        IF [[ "$OUTPUT" -eq "0" ]]; 
+            then
+                echo "$node sync succeeded" >> /opt/monitor/var/merlin_database_sync.log
+            else
+                echo "$node sync failed" >> /opt/monitor/var/merlin_database_sync.log
+        FI
+    done;
+}
+
 
 export_sql_tables
 sync_sql_file_to_peers
 import_sql_file_on_peers
+dump_remote_database_tables
+verify_remote_database
