@@ -129,7 +129,8 @@ for node in $(mon node list --type=peer); \
             "')
         CHECKSUM_LOCAL=$(asmonitor \
             mysql -u root -e " \
-            checksum table merlin.dashboards, \
+            checksum table \
+            merlin.dashboards, \
             merlin.dashboard_widgets, \
             merlin.ninja_report_comments, \
             merlin.custom_vars, \
