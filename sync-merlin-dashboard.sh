@@ -16,7 +16,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  if not, see <http://www.gnu.org/licenses/>.
 
 
 export_sql_tables()
@@ -44,48 +44,59 @@ for node in $(mon node list --type=peer); \
     done;
 }
 
-compare_remote_database_checksum_and_sync ()
-{
+compare_remote_database_checksum_and_sync () {
 for node in $(mon node list --type=peer); \
     do
+        check_remote_checksum () {
         local CHECKSUM_REMOTE
-        CHECKSUM_REMOTE=$(asmonitor \
-            ssh "$node" \
-            'mysql -u root -e "\
-            checksum table \
-            merlin.dashboards, \
-            merlin.dashboard_widgets, \
-            merlin.ninja_report_comments, \
-            merlin.custom_vars, \
-            merlin.ninja_saved_filters, \
-            merlin.ninja_settings, \
-            merlin.permission_quarks, \
-            merlin.saved_reports, \
-            merlin.saved_reports_objects, \
-            merlin.saved_reports_options \
-            "')
-        CHECKSUM_LOCAL=$(asmonitor \
-            mysql -u root -e " \
-            checksum table \
-            merlin.dashboards, \
-            merlin.dashboard_widgets, \
-            merlin.ninja_report_comments, \
-            merlin.custom_vars, \
-            merlin.ninja_saved_filters, \
-            merlin.ninja_settings, \
-            merlin.permission_quarks, \
-            merlin.saved_reports, \
-            merlin.saved_reports_objects, \
-            merlin.saved_reports_options \
-            ")
-        IF [[ "$CHECKSUM_LOCAL" == "$CHECKSUM_REMOTE" ]]; 
+            CHECKSUM_REMOTE=$(asmonitor \
+                ssh "$node" \
+                'mysql -u root -e "\
+                checksum table \
+                merlin.dashboards, \
+                merlin.dashboard_widgets, \
+                merlin.ninja_report_comments, \
+                merlin.custom_vars, \
+                merlin.ninja_saved_filters, \
+                merlin.ninja_settings, \
+                merlin.permission_quarks, \
+                merlin.saved_reports, \
+                merlin.saved_reports_objects, \
+                merlin.saved_reports_options \
+                "')
+        }
+        check_local_checksum () {
+            CHECKSUM_LOCAL=$(asmonitor \
+                mysql -u root -e " \
+                checksum table \
+                merlin.dashboards, \
+                merlin.dashboard_widgets, \
+                merlin.ninja_report_comments, \
+                merlin.custom_vars, \
+                merlin.ninja_saved_filters, \
+                merlin.ninja_settings, \
+                merlin.permission_quarks, \
+                merlin.saved_reports, \
+                merlin.saved_reports_objects, \
+                merlin.saved_reports_options \
+                ")
+        }
+        check_remote_checksum
+        check_local_checksum
+        if [[ "$CHECKSUM_LOCAL" == "$CHECKSUM_REMOTE" ]]; 
             then
-                # echo "$node sync succeeded" >> /opt/monitor/var/merlin_database_sync.log
-
+                echo "`date "+%F %T"` $node Is in sync." >> /opt/monitor/var/merlin_database_sync.log
             else
+                echo "`date "+%F %T"` $node Not in sync." >> /opt/monitor/var/merlin_database_sync.log
                 export_sql_tables
                 sync_and_import_sql_file_to_peers
-        FI
+                check_remote_checksum
+                if [[ "$CHECKSUM_LOCAL" == "$CHECKSUM_REMOTE" ]];
+                    then
+                        echo "`date "+%F %T"` $node Sync Corrected." >> /opt/monitor/var/merlin_database_sync.log
+                    else
+                        echo "`date "+%F %T"` $node Sync Failed." >> /opt/monitor/var/merlin_database_sync.log
+        fi
     done;
 }
 
@@ -123,11 +134,11 @@ for node in $(mon node list --type=peer); \
             merlin.saved_reports_objects, \
             merlin.saved_reports_options \
             ")
-        IF [[ "$CHECKSUM_LOCAL" == "$CHECKSUM_REMOTE" ]]; 
+        if [[ "$CHECKSUM_LOCAL" == "$CHECKSUM_REMOTE" ]]; 
             then
-                echo "$node sync succeeded" >> /opt/monitor/var/merlin_database_sync.log
+                echo "`date "+%F %T"` $node Is in sync." >> /opt/monitor/var/merlin_database_sync.log
             else
-                echo "$node sync failed" >> /opt/monitor/var/merlin_database_sync.log
-        FI
+                echo "`date "+%F %T"` $node Not in sync." >> /opt/monitor/var/merlin_database_sync.log
+        fi
     done;
 }
