@@ -111,17 +111,6 @@ compare_remote_database_checksum ()
 {
 for node in $(mon node list --type=peer); \
     do
-        ##
-        #Removed to test checksum alternative
-        ##
-        # local OUTPUT
-        # OUTPUT=$(asmonitor ssh "$node" 'cmp -s /opt/monitor/var/merlin_database_sync.sql /opt/monitor/var/merlin_database_sync_verify.sql')
-        # IF [[ "$OUTPUT" -eq "0" ]]; 
-        #     then
-        #         echo "$node sync succeeded" >> /opt/monitor/var/merlin_database_sync.log
-        #     else
-        #         echo "$node sync failed" >> /opt/monitor/var/merlin_database_sync.log
-        # FI
         local CHECKSUM_REMOTE
         CHECKSUM_REMOTE=$(asmonitor \
             ssh "$node" \
