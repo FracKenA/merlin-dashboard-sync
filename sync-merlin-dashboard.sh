@@ -35,22 +35,28 @@ asmonitor \
     > /opt/monitor/var/merlin_database_sync.sql
 }
 
-sync_sql_file_to_peers ()
-{
-for node in $(mon node list --type=peer); \
-    do asmonitor \
-        scp /opt/monitor/var/merlin_database_sync.sql \
-            "$node":/opt/monitor/var/merlin_database_sync.sql;
-    done;
-}
+##
+# Removed to make single ssh call
+##
+# sync_and_import_sql_file_to_peers ()
+# {
+# for node in $(mon node list --type=peer); \
+#     do asmonitor \
+#         scp /opt/monitor/var/merlin_database_sync.sql \
+#             "$node":/opt/monitor/var/merlin_database_sync.sql && \
+#     done;
+# }
 
-import_sql_file_on_peers ()
-{
-for node in $(mon node list --type=peer); \
-    do asmonitor \
-        ssh "$node" 'mysql -u root merlin < /opt/monitor/var/merlin_database_sync.sql';
-    done;
-}
+##
+# Removed to combine sync and import into single process.
+##
+# import_sql_file_on_peers ()
+# {
+# for node in $(mon node list --type=peer); \
+#     do asmonitor \
+#         ssh "$node" 'mysql -u root merlin < /opt/monitor/var/merlin_database_sync.sql';
+#     done;
+# }
 
 ##
 # Removed to test checksum alternative
@@ -74,7 +80,34 @@ for node in $(mon node list --type=peer); \
 #     done;
 # }
 
-compare_remote_database ()
+##
+#Removed to test checksum alternative
+##
+# compare_remote_database ()
+# {
+# for node in $(mon node list --type=peer); \
+#     do
+#         local OUTPUT
+#         OUTPUT=$(asmonitor ssh "$node" 'cmp -s /opt/monitor/var/merlin_database_sync.sql /opt/monitor/var/merlin_database_sync_verify.sql')
+#         IF [[ "$OUTPUT" -eq "0" ]]; 
+#             then
+#                 echo "$node sync succeeded" >> /opt/monitor/var/merlin_database_sync.log
+#             else
+#                 echo "$node sync failed" >> /opt/monitor/var/merlin_database_sync.log
+#         FI
+#     done;
+# }
+
+sync_and_import_sql_file_to_peers ()
+{
+for node in $(mon node list --type=peer); \
+    do asmonitor \
+        cat /opt/monitor/var/merlin_database_sync.sql | ssh "$node" "mysql -u root merlin";
+    done;
+}
+
+
+compare_remote_database_checksum ()
 {
 for node in $(mon node list --type=peer); \
     do
@@ -129,7 +162,9 @@ for node in $(mon node list --type=peer); \
 
 
 export_sql_tables
-sync_sql_file_to_peers
-import_sql_file_on_peers
-dump_remote_database_tables
-compare_remote_database
+# sync_sql_file_to_peers
+# import_sql_file_on_peers
+# dump_remote_database_tables
+# compare_remote_database
+sync_and_import_sql_file_to_peers
+compare_remote_database_checksum
