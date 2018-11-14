@@ -123,10 +123,22 @@ compare_remote_database_checksum () {
         check_local_checksum
         if [[ "$checksum_local" == "$checksum_remote" ]]
             then
-                echo "[$(date "+%F %T")] $node is in sync." >> "$merlin_log"
+                echo "[$(date "+%F %T")] $node is in sync."
             else
-                echo "[$(date "+%F %T")] $node not in sync." >> "$merlin_log"
+                echo "[$(date "+%F %T")] $node not in sync."
         fi
         
     done
 }
+
+# Logic to perform sync or dryrun
+if [[ -z $1 ]]
+    then
+        compare_remote_database_checksum
+    elif [[ $1 == sync]]
+        compare_remote_database_checksum_and_sync
+    else
+        echo "Sync not set, performing dry run"
+        echo "use \"sync-merlin-dashboard.sh\" sync to perform sync"
+        compare_remote_database_checksum
+fi
