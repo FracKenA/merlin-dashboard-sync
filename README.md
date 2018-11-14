@@ -17,6 +17,17 @@ This script needs to be placed somewhere that the monitor users has access execu
     # cp ./sync-merlin-dashboard.sh /opt/monitor/
     # chown monitor:apache /opt/monitor/sync-merlin-dashboard.sh
     # chmod a+x /opt/monitor/sync-merlin-dashboard.sh
-    # cat "15 */4 * * * monitor /opt/monitor/sync-merlin-dashboard.sh" > /etc/cron.d/merlin-database-sync.cron
+
+To perform a dry run simply execute the script.
+
+    # /opt/monitor/sync-merlin-dashboard.sh
+
+To perform a sync, execute the script with the sync argument.
+
+    # /opt/monitor/sync-merlin-dashboard.sh sync
+
+To schedule the sync place setup a cron job.
+
+    # cat "15 */4 * * * monitor /opt/monitor/sync-merlin-dashboard.sh sync" > /etc/cron.d/merlin-database-sync.cron
 ## Known Issues
 This script does not perform any verification of the tasks performed.
