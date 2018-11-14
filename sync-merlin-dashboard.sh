@@ -18,6 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  if not, see <http://www.gnu.org/licenses/>.
 
+# Files
+merlin_log="/opt/monitor/var/merlin_dashboard_database_sync.log"
+merlin_sql="/opt/monitor/var/merlin_database_sync.sql"
+
 
 export_sql_tables()
 {
@@ -33,14 +37,14 @@ asmonitor \
         saved_reports \
         saved_reports_objects \
         saved_reports_options \
-    > /opt/monitor/var/merlin_database_sync.sql
+    > "$merlin_sql"
 }
 
 sync_and_import_sql_file_to_peers ()
 {
 for node in $(mon node list --type=peer); \
     do asmonitor \
-        cat /opt/monitor/var/merlin_database_sync.sql | ssh "$node" "mysql -u root merlin";
+        cat "$merlin_sql" | ssh "$node" "mysql -u root merlin";
     done;
 }
 
@@ -85,18 +89,20 @@ for node in $(mon node list --type=peer); \
         check_local_checksum
         if [[ "$CHECKSUM_LOCAL" == "$CHECKSUM_REMOTE" ]]; 
             then
-                echo "`date "+%F %T"` $node Is in sync." >> /opt/monitor/var/merlin_database_sync.log
+                echo "$(date "+%F %T") $node Is in sync." >> "$merlin_log"
             else
-                echo "`date "+%F %T"` $node Not in sync." >> /opt/monitor/var/merlin_database_sync.log
+                echo "$(date "+%F %T") $node Not in sync." >> "$merlin_log"
                 export_sql_tables
                 sync_and_import_sql_file_to_peers
                 check_remote_checksum
+            fi
                 if [[ "$CHECKSUM_LOCAL" == "$CHECKSUM_REMOTE" ]];
                     then
-                        echo "`date "+%F %T"` $node Sync Corrected." >> /opt/monitor/var/merlin_database_sync.log
+                        echo "$(date "+%F %T") $node Sync Corrected." >> "$merlin_log"
                     else
-                        echo "`date "+%F %T"` $node Sync Failed." >> /opt/monitor/var/merlin_database_sync.log
-        fi
+                        echo "$(date "+%F %T") $node Sync Failed." >> "$merlin_log"
+                
+          fi
     done;
 }
 
@@ -136,9 +142,9 @@ for node in $(mon node list --type=peer); \
             ")
         if [[ "$CHECKSUM_LOCAL" == "$CHECKSUM_REMOTE" ]]; 
             then
-                echo "`date "+%F %T"` $node Is in sync." >> /opt/monitor/var/merlin_database_sync.log
+                echo "$(date "+%F %T") $node Is in sync." >> "$merlin_log"
             else
-                echo "`date "+%F %T"` $node Not in sync." >> /opt/monitor/var/merlin_database_sync.log
+                echo "$(date "+%F %T") $node Not in sync." >> "$merlin_log"
         fi
     done;
 }
