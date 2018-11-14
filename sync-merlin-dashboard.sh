@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 export_sql_tables()
 {
 asmonitor \
@@ -34,6 +35,64 @@ asmonitor \
         saved_reports_options \
     > /opt/monitor/var/merlin_database_sync.sql
 }
+
+sync_and_import_sql_file_to_peers ()
+{
+for node in $(mon node list --type=peer); \
+    do asmonitor \
+        cat /opt/monitor/var/merlin_database_sync.sql | ssh "$node" "mysql -u root merlin";
+    done;
+}
+
+
+compare_remote_database_checksum ()
+{
+for node in $(mon node list --type=peer); \
+    do
+        local CHECKSUM_REMOTE
+        CHECKSUM_REMOTE=$(asmonitor \
+            ssh "$node" \
+            'mysql -u root -e "\
+            checksum table \
+            merlin.dashboards, \
+            merlin.dashboard_widgets, \
+            merlin.ninja_report_comments, \
+            merlin.custom_vars, \
+            merlin.ninja_saved_filters, \
+            merlin.ninja_settings, \
+            merlin.permission_quarks, \
+            merlin.saved_reports, \
+            merlin.saved_reports_objects, \
+            merlin.saved_reports_options \
+            "')
+        CHECKSUM_LOCAL=$(asmonitor \
+            mysql -u root -e " \
+            checksum table \
+            merlin.dashboards, \
+            merlin.dashboard_widgets, \
+            merlin.ninja_report_comments, \
+            merlin.custom_vars, \
+            merlin.ninja_saved_filters, \
+            merlin.ninja_settings, \
+            merlin.permission_quarks, \
+            merlin.saved_reports, \
+            merlin.saved_reports_objects, \
+            merlin.saved_reports_options \
+            ")
+        IF [[ "$CHECKSUM_LOCAL" == "$CHECKSUM_REMOTE" ]]; 
+            then
+                echo "$node sync succeeded" >> /opt/monitor/var/merlin_database_sync.log
+            else
+                echo "$node sync failed" >> /opt/monitor/var/merlin_database_sync.log
+        FI
+    done;
+}
+
+
+export_sql_tables
+sync_and_import_sql_file_to_peers
+compare_remote_database_checksum
+
 
 ##
 # Removed to make single ssh call
@@ -98,63 +157,7 @@ asmonitor \
 #     done;
 # }
 
-sync_and_import_sql_file_to_peers ()
-{
-for node in $(mon node list --type=peer); \
-    do asmonitor \
-        cat /opt/monitor/var/merlin_database_sync.sql | ssh "$node" "mysql -u root merlin";
-    done;
-}
-
-
-compare_remote_database_checksum ()
-{
-for node in $(mon node list --type=peer); \
-    do
-        local CHECKSUM_REMOTE
-        CHECKSUM_REMOTE=$(asmonitor \
-            ssh "$node" \
-            'mysql -u root -e "\
-            checksum table \
-            merlin.dashboards, \
-            merlin.dashboard_widgets, \
-            merlin.ninja_report_comments, \
-            merlin.custom_vars, \
-            merlin.ninja_saved_filters, \
-            merlin.ninja_settings, \
-            merlin.permission_quarks, \
-            merlin.saved_reports, \
-            merlin.saved_reports_objects, \
-            merlin.saved_reports_options \
-            "')
-        CHECKSUM_LOCAL=$(asmonitor \
-            mysql -u root -e " \
-            checksum table \
-            merlin.dashboards, \
-            merlin.dashboard_widgets, \
-            merlin.ninja_report_comments, \
-            merlin.custom_vars, \
-            merlin.ninja_saved_filters, \
-            merlin.ninja_settings, \
-            merlin.permission_quarks, \
-            merlin.saved_reports, \
-            merlin.saved_reports_objects, \
-            merlin.saved_reports_options \
-            ")
-        IF [[ "$CHECKSUM_LOCAL" == "$CHECKSUM_REMOTE" ]]; 
-            then
-                echo "$node sync succeeded" >> /opt/monitor/var/merlin_database_sync.log
-            else
-                echo "$node sync failed" >> /opt/monitor/var/merlin_database_sync.log
-        FI
-    done;
-}
-
-
-export_sql_tables
 # sync_sql_file_to_peers
 # import_sql_file_on_peers
 # dump_remote_database_tables
 # compare_remote_database
-sync_and_import_sql_file_to_peers
-compare_remote_database_checksum
